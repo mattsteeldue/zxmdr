@@ -15,12 +15,19 @@ With this script, you are able to :
 - port files to/from  .tap  from/to  .mdr
 
 Examples.
+
 $> perl mdr.pl -l cart.mdr label=NEW_LABEL
+
 $> perl mdr.pl -l cart.mdr noautorun=run
+
 $> perl mdr.pl -l cart.mdr erase=run
+
 $> perl mdr.pl -l cart.mdr rename=sys64 to=SYS64
+
 $> perl mdr.pl -l cart.mdr -p tape=d:/zx/forth/vforth13.tap
+
 $> perl mdr.pl -l cart.mdr put=[file1.txt,file2.txt] to=file1
+
 
 Since it is a work-in-progress, any feedback is welcome.
 
