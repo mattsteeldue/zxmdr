@@ -6,6 +6,8 @@
 
   rev.2019.02.15
 
+  \ by Matteo Vitturi, 2016-2019
+
   \ Copying, modifying and distributing this software is allowed 
   \ provided this copyright notice is kept.  
   \ This work is available as-is with no whatsoever warranty.
