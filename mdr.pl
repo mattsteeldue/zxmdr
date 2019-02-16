@@ -6,6 +6,10 @@
 
   rev.2019.02.15
 
+  \ Copying, modifying and distributing this software is allowed 
+  \ provided this copyright notice is kept.  
+  \ This work is available as-is with no whatsoever warranty.
+
   This is a script that allows you to manipulate .MDR cartrige files.
   This script needs a .MDR filename that is read entirely at start.
   Then some operations will be performed based on options given.
@@ -588,11 +592,11 @@ sub showcat {
 
     print "\n";
 
-    printf ( "Header: «%-10s»\n", $master_label ) ;
+    printf ( "Header: Â«%-10sÂ»\n", $master_label ) ;
 
     if ( scalar( keys %cart_label ) > 1 ) {
         for my $label (sort keys %cart_label) {
-            printf ( "        «%-10s»  (%d times)\n", $label, $cart_label{$label} ) ;
+            printf ( "        Â«%-10sÂ»  (%d times)\n", $label, $cart_label{$label} ) ;
         }
     }
     my $fmt = "%-4s %6d %-11s " ;
