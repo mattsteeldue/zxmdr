@@ -4,7 +4,7 @@
 
   mdr.pl
 
-  rev.2019.02.22
+  rev.2019.03.12
 
   \ by Matteo Vitturi, 2016-2019
 
@@ -411,20 +411,24 @@ my $SSIZE = 543 ; # constant
 # ____________________________________________________________________________
 
 # find first free sector.
-my $current_head = 254 ;
+my $current_head = 255 ;
 sub first_free {
     my $pass = 0 ;
     my $i = $current_head ;
-    $i -= 2 ;
+    $i -= 1 ;
     while ( $i != $current_head ) {
         $i = 254 if 1 == $i ;
-        $i = 253 if 0 == $i ;
+        # $i = 253 if 0 == $i ;
         my $key = sprintf( "%03d", $i ) ;
-        if ( $record->{ $key }->{ empty } ) {
-            $current_head = $i ;
-            return $key ;
+        if ($record->{ $key }->{ unusable } ) {
+            $i -= 1 ;
+        } else {
+            if ( $record->{ $key }->{ empty }  ) {
+                $current_head = $i ;
+                return $key ;
+            }
+            $i -= 1 ;
         }
-        $i -= 2 ;
     }
     die "Microdrive full" ;
     return 255 ; # MDR is full
@@ -1236,4 +1240,6 @@ __END__
 -l "d:/zx/Forth/2018/RUN.MDR" autorun=run line=65535
 -l /zx/forth/F1413/M2.MDR get=forth1413d dump=forth1413d.dump.txt
 /zx/forth/F1413/M7.MDR put=F1413.f dump=/zx/Forth/F1413/F1413.f
-
+/zx/forth/F1413/M5.MDR   put=F1413.f dump=/zx/forth/F1413/F1413.f
+/zx/forth/F1413/M5.MDR   put=.bat dump=/zx/forth/F1413/copy_source_to_mdr7.bat
+/zx/forth/F1413/M5.MDR   -v -lb
