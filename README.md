@@ -1,5 +1,5 @@
 # zxmdr
-ZX Microdrive cartridge .MDR file cruncher
+__ZX Microdrive cartridge .MDR file cruncher__
 
 A few years ago I've been in contact with Marcos Cruz and he gave me the idea to write a .mdr manipulator since that format is well known.
 Within a few days I managed to code a Perl script that simply examines and manipulates anything within a .mdr file.
