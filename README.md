@@ -1,4 +1,4 @@
-# zxmdr
+# zxmdr - mdr.pl
 __ZX Microdrive cartridge .MDR file cruncher__
 
 A few years ago I've been in contact with Marcos Cruz and he gave me the idea to write a .mdr manipulator since that format is well known.
