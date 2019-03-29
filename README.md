@@ -29,11 +29,12 @@ $> perl mdr.pl  m8.mdr
     Prog    275 Forth1413_   23813    284   +275
     Code   7863 forth1413d   25600   7872
     
+    Bad     512             254
     ____ ______ ___________ ___________________________________________
     
           20189 total used
-              0 total bad
-         108544 total free
+            512 total bad
+         108032 total free
 
 $> perl mdr.pl m8  put=text.prnt  dump=hostfile.txt 
 
