@@ -18,28 +18,28 @@ Examples.
 
 $> perl mdr.pl  m8.mdr
 
-  Header: "M8        "
-  Type  Bytes Filename     Addr. Actual   Vars   Line
-  ____ ______ ___________ ______ ______ ______ ______
-  Prog   2295 Blk2Tap      23824   2304  +2295
-  Prog   9254 Chomp.udg    23824   9263  +8721
-  Prog   8688 Chomp2       23813   8697  +8688
-  Prog    365 DoubleChr    23813    374   +365
-  Prnt   1300 HelloWorld  48 65 6C 6C 6F 20 57 6F 72 6C 64 21 20 48 65 6C
-  Prog   7333 Mannesman    23813   7342  +4706
-  Prog    343 Primality    23813    352   +343
-  Prog   2164 RandAcces1   24440   2173  +2164
-  Prog   2295 RandAccess   24440   2304  +2295
-  Prog    222 SQRdensity   23813    231   +222
-  Prog    765 Stripes      23813    774   +765
-  Prog    467 Tap2Blk      24440    476   +467
-  Prog     64 TestCOM      23824     73    +64
-  Bad     512             254
-  ____ ______ ___________ ___________________________________________
- 
-       35663 total used
-         512 total bad
-       90624 total free
+    Header: "M8        "
+    Type  Bytes Filename     Addr. Actual   Vars   Line
+    ____ ______ ___________ ______ ______ ______ ______
+    Prog   2295 Blk2Tap      23824   2304  +2295
+    Prog   9254 Chomp.udg    23824   9263  +8721
+    Prog   8688 Chomp2       23813   8697  +8688
+    Prog    365 DoubleChr    23813    374   +365
+    Prnt   1300 HelloWorld  48 65 6C 6C 6F 20 57 6F 72 6C 64 21 20 48 65 6C
+    Prog   7333 Mannesman    23813   7342  +4706
+    Prog    343 Primality    23813    352   +343
+    Prog   2164 RandAcces1   24440   2173  +2164
+    Prog   2295 RandAccess   24440   2304  +2295
+    Prog    222 SQRdensity   23813    231   +222
+    Prog    765 Stripes      23813    774   +765
+    Prog    467 Tap2Blk      24440    476   +467
+    Prog     64 TestCOM      23824     73    +64
+    Bad     512             254
+    ____ ______ ___________ ___________________________________________
+   
+          35663 total used
+            512 total bad
+          90624 total free
 
 $> perl mdr.pl m8  put=text.prnt  dump=hostfile.txt 
 
