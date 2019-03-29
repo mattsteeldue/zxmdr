@@ -16,19 +16,47 @@ With this script, you are able to :
 
 Examples.
 
-$> perl mdr.pl -l cart.mdr label=NEW_LABEL
+$> perl mdr.pl  m8.mdr
 
-$> perl mdr.pl -l cart.mdr noautorun=run
+ Header: "M8        "
+ Type  Bytes Filename     Addr. Actual   Vars   Line
+ ____ ______ ___________ ______ ______ ______ ______
+ Prog   2295 Blk2Tap      23824   2304  +2295
+ Prog   9254 Chomp.udg    23824   9263  +8721
+ Prog   8688 Chomp2       23813   8697  +8688
+ Prog    365 DoubleChr    23813    374   +365
+ Prnt   1300 HelloWorld  48 65 6C 6C 6F 20 57 6F 72 6C 64 21 20 48 65 6C
+ Prog   7333 Mannesman    23813   7342  +4706
+ Prog    343 Primality    23813    352   +343
+ Prog   2164 RandAcces1   24440   2173  +2164
+ Prog   2295 RandAccess   24440   2304  +2295
+ Prog    222 SQRdensity   23813    231   +222
+ Prog    765 Stripes      23813    774   +765
+ Prog    467 Tap2Blk      24440    476   +467
+ Prog     64 TestCOM      23824     73    +64
+ Bad     512             254
+ ____ ______ ___________ ___________________________________________
+ 
+       35663 total used
+         512 total bad
+       90624 total free
 
-$> perl mdr.pl -l cart.mdr erase=run
+$> perl mdr.pl m8  put=text.prnt  dump=hostfile.txt 
 
-$> perl mdr.pl -l cart.mdr rename=sys64 to=SYS64
+$> perl mdr.pl m8  label=NEW_LABEL
 
-$> perl mdr.pl -l cart.mdr -p tape=d:/zx/forth/vforth13.tap
+$> perl mdr.pl m8  noautorun=run
 
-$> perl mdr.pl -l cart.mdr put=[file1.txt,file2.txt] to=file1
+$> perl mdr.pl m8  erase=run
+
+$> perl mdr.pl m8  rename=sys64 to=SYS64
+
+$> perl mdr.pl m8  -p tape=vforth13.tap
+
 
 
 Since it is a work-in-progress, any feedback is welcome.
 
 The script accepts a "verbose" switch that can be used to completely dump the content of a cartridge. This feature is useful to verify the cartridge integrity of any sector. I used it to hack the checksum of bad-sectors to obtain a fully 254-sectors length cartridge: It is well known that in reality at least one sector is unusable due to the tape-juction and the peculiar way the ZX Microdrive FORMAT "M" command works. 
+
+
