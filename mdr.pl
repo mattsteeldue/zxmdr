@@ -4,7 +4,7 @@
 
   mdr.pl
 
-  rev.2019.03.12
+  rev.2019.04.28
 
   \ by Matteo Vitturi, 2016-2019
 
@@ -649,11 +649,15 @@ sub showcat {
             $first_record = $nrec if 0 == $record->{ $nrec }->{ recnum } ;
         }
         my @list = sort { $b cmp $a } @temp ;
-        my $reclen = $record->{ $first_record }->{ reclen } ;
-        my $recflg = $record->{ $first_record }->{ recflg } ;
-        my $data = $record->{ $first_record }->{ data } ;
+        my $reclen = $record->{ $first_record }->{ reclen } || 0 ;
+        my $recflg = $record->{ $first_record }->{ recflg } || -1 ;
+        my $data = $record->{ $first_record }->{ data } || '00000000' ;
         my @detail = unpack("CSSSS", substr( $data,0,9 ) ) ;
         my $type = ( $reclen && !($recflg & 4)) ? 'Prnt' : 'Norm' ;
+        if ( $first_record == -1 ) {
+            $type = 'Bad!' ;
+            $detail[1] = 512 * scalar( @temp ) ;
+        }
         $type = "Prog" if $type eq 'Norm' && 0 == $detail[0] ;
         $type = "Numb" if $type eq 'Norm' && 1 == $detail[0] ;
         $type = "Char" if $type eq 'Norm' && 2 == $detail[0] ;
@@ -663,7 +667,7 @@ sub showcat {
         printf ( $fmt, $type, $detail[1], $name ) if $type ne 'Prnt';
         printf ( $fmt, $type, $size     , $name ) if $type eq 'Prnt';
 
-        if ( $option{ sectors } ) {
+        if ( $option{ sectors } or $first_record == -1 ) {
             for ( my $i = 0 ; $i <= $#list ; $i++ ) {
                 print ','       if $i >  0 ;
                 print $list[$i] if $i <= 7 ;
@@ -671,7 +675,7 @@ sub showcat {
                 last if  $i == 7  && $#list > 7 ;
             }
         }
-        else {
+        elsif ( $list[0] ) {
             my $data = $record->{ $list[0] }->{ data } ;
             printf ( '%6d %6d %+6d %6s', $detail[2], $size, $detail[3], ($detail[4]<32768?$detail[4]:'') ) if $type eq "Prog" ;
             printf ( '%6d %6d %6s', $detail[2], $size, chr(127&$detail[3]+64).'()' )                       if $type eq "Numb" ;
@@ -680,8 +684,9 @@ sub showcat {
             printf ( '%6d %6d', $detail[2], $size )                                                        if $type eq "Scrn" ;
             printf ( '%02X ' x 16, unpack("C16", substr( $data,0,16 ) ) )                                  if $type eq "Prnt" ;
         }
-        
+
         print "\n" ;
+
     }
 
     print "\n" if $option{ showdeleted } ;
@@ -727,10 +732,10 @@ sub showcat {
 
     print "____ ______ ___________ ___________________________________________\n";
     print "\n" ;
-    printf ( "$fmt\n", '', $used, 'total used' ) ;
-    printf ( "$fmt\n", '', $free, 'total deleted' ) if $option{ showdeleted } ;
-    printf ( "$fmt\n", '', $bad , 'total bad ' ) if $option{ showbad  } ;
-    printf ( "$fmt\n", '', $free, 'total free' ) ;
+    printf ( "$fmt %3d K\n", '', $used, 'total used'    , int(0.5+$used/1024) ) ;
+    printf ( "$fmt %3d K\n", '', $free, 'total deleted' , int(0.5+$free/1024) ) if $option{ showdeleted } ;
+    printf ( "$fmt %3d K\n", '', $bad , 'total bad '    , int(0.5+$bad /1024) ) if $option{ showbad  } ;
+    printf ( "$fmt %3d K\n", '', $free, 'total free'    , int(0.5+$free/1024) ) ;
 
 }
 
@@ -1188,7 +1193,6 @@ new_label( $option{ label } ) if $option{ label } ;
 
 # extract anything from cartridge to host-file
 if ( $option{ get } && ( $option{ tape } or $option{ dump } or $option{ text } ) ) {
-
     my ($header,$content) = getfile( $option{ get } ) ;
     my $hostname = $option{ tape } || $option{ dump } || $option{ text };
     open (H, ">","$hostname") || die "Cannot write $hostname" ;
@@ -1207,6 +1211,7 @@ if ( $option{ put } && ( $option{ tape } or $option{ dump } or $option{ text } )
         $content =~ s/\n/\r/mg ;
     }
     putfile( $option{ put }, $content, ( $option{ dump }||$option{ text } ? 1 : 0 ) ) ;
+    print "Host file $hostname copied to $option{ text } in cartridge $option{ cardridge } \n" ;
 }
 
 # put to mdr from tape or text file
@@ -1243,3 +1248,6 @@ __END__
 /zx/forth/F1413/M5.MDR   put=F1413.f dump=/zx/forth/F1413/F1413.f
 /zx/forth/F1413/M5.MDR   put=.bat dump=/zx/forth/F1413/copy_source_to_mdr7.bat
 /zx/forth/F1413/M5.MDR   -v -lb
+
+/zx/forth/F1413/M5.MDR   put=F1413.f text=/zx/forth/F1413/F1413.f
+/zx/forth/F1413/M5.MDR   get=F1413.f dump=/zx/forth/F1413/dump.txt
