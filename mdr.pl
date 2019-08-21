@@ -1273,26 +1273,3 @@ burp       if $option{ out } ;
 exit 0 ;
 
 1;
-
-__END__
--l d:\zx\Z80\20160827.MDR rename=run to=Run04
--l d:\zx\Z80\20160827.MDR -p tape=\zx\forth\vforth13.tap
--l d:\zx\Z80\20160829.MDR rename=sys64 to=SYS64
--l d:\zx\Z80\20160829.MDR -p tape=d:\zx\forth\vforth13.tap
--l d:\zx\Z80\20160829.MDR erase=run
--l d:\zx\Z80\20160829.MDR -p tape=d:\zx\forth\vforth13.tap
--l d:\zx\Z80\20160829.MDR put=[file1.txt,file2.txt]
--l d:\zx\Z80\20160829.MDR put=[file1.txt,file2.txt] to=file1
--l wl1.mdr rename="Sprite S()" to="Sprite s()"
--l -b -s d:\zx\Forth\2016\FORTH1.MDR
--l "d:/zx/Forth/2018/RUN.MDR" out=OUT.MDR label=FORTH 
--l "d:/zx/Forth/2018/RUN.MDR" rename=Forth
--l "d:/zx/Forth/2018/RUN.MDR" autorun=run line=65535
--l /zx/forth/F1413/M2.MDR get=forth1413d dump=forth1413d.dump.txt
-/zx/forth/F1413/M7.MDR put=F1413.f dump=/zx/Forth/F1413/F1413.f
-/zx/forth/F1413/M5.MDR   put=F1413.f dump=/zx/forth/F1413/F1413.f
-/zx/forth/F1413/M5.MDR   put=.bat dump=/zx/forth/F1413/copy_source_to_mdr7.bat
-/zx/forth/F1413/M5.MDR   -v -lb
-
-/zx/forth/F1413/M5.MDR   put=F1413.f text=/zx/forth/F1413/F1413.f
-/zx/forth/F1413/M5.MDR   get=F1413.f dump=/zx/forth/F1413/dump.txt
