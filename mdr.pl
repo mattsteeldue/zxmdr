@@ -224,7 +224,7 @@ my %option = (
     verbose          => 0,
 
     fix              => 0,
-    cardridge        => '',
+    cartridge        => '',
     tape             => '',
     dump             => '',
     text             => '',
@@ -271,13 +271,13 @@ for my $switch ( @ARGV ) {
         my ( $key, $value ) = ( $1, $2 ) ; #'''
         $option{ $key } = $value ;
     }
-    # the first of the remaining parameters is intended as cardridge filename
+    # the first of the remaining parameters is intended as cartridge filename
     else {
-        if ( $option{ cardridge } ) {
+        if ( $option{ cartridge } ) {
             push @object_list, $switch ;
         }
         else {
-            $option{ cardridge } = $switch ;
+            $option{ cartridge } = $switch ;
         }
     }
 }
@@ -290,19 +290,19 @@ if ( $option{ text2tap } && $option{ tape } ) {
 
 # ____________________________________________________________________________
 
-if ( $option{ cardridge } && scalar(@ARGV) == 1 ) {
+if ( $option{ cartridge } && scalar(@ARGV) == 1 ) {
     $option{ showcat } = 1 ;
 }
 
 # ____________________________________________________________________________
 
-if ( $option{ cardridge } && $option{ cardridge } !~ m/\.mdr$/i ) {
-    $option{ cardridge } .= '.mdr' ;
+if ( $option{ cartridge } && $option{ cartridge } !~ m/\.mdr$/i ) {
+    $option{ cartridge } .= '.mdr' ;
 }
 
 # ____________________________________________________________________________
 
-if ( $option{ shorthelp } or ( !$option{ cardridge } and not $option{ help } ) ) {
+if ( $option{ shorthelp } or ( !$option{ cartridge } and not $option{ help } ) ) {
     print qq(
   Syntax: perl mdr.pl [switch] <cartridge> [key=value ...]
   Help:   perl mdr.pl -h   
@@ -450,7 +450,7 @@ sub first_free {
 # ____________________________________________________________________________
 
 sub slurp {
-    open ( MDR, '<', $option{ cardridge } ) || die "Cannot open mdr $option{ cardridge } " ;
+    open ( MDR, '<', $option{ cartridge } ) || die "Cannot open mdr $option{ cartridge } " ;
     $realsize = sysread( MDR, $whole,  254 * $SSIZE + 1 ) ;
     close MDR ;
 }
@@ -478,7 +478,7 @@ sub new_label {
         $header = pack( 'CC S A10 C', $hdflag, $hdnumb, $ntused, $hdname, $hdchk  ) ;
         substr( $whole, $offset, 15 ) = $header ;
     }
-    $option{ out } = $option{ cardridge } unless $option{ out };
+    $option{ out } = $option{ cartridge } unless $option{ out };
 }
 
 # ____________________________________________________________________________
@@ -518,7 +518,7 @@ sub analyze {
                     substr( $sector,  15 +15 + 512, 1 ) = pack( 'C', $dchk ) ;
                 }
                 substr( $whole, $offset, $SSIZE ) = $sector ;
-                $option{ out } = $option{ cardridge } unless $option{ out };
+                $option{ out } = $option{ cartridge } unless $option{ out };
             }
             unless ( $unusable && !$option{ verbose }) {
                 warn "hdnumb $hdnumb | recnum $recnum | bad hdchk  checksum expected $fhdchk  found $hdchk \n" if $fhdchk  != $hdchk  ;
@@ -773,7 +773,7 @@ sub erasefile {
     my $name = shift ;
 
     unless ( defined $cart_catalog{ $name } && $cart_catalog{$name} > 0 ) {
-        warn "File  '$name'  does not exist in cartridge " . $option{ cardridge } . "\n";
+        warn "File  '$name'  does not exist in cartridge " . $option{ cartridge } . "\n";
         return ;
     }
     my @list = sort { $b <=> $a } @{ $cart_cat_sec{ $name } } ;
@@ -791,7 +791,7 @@ sub erasefile {
         $record->{ $key }->{ empty } = 1 ;
         substr( $whole, $record->{ $key }->{ offset }, $SSIZE ) = $sector ;
     }
-    $option{ out } = $option{ cardridge } unless $option{ out };
+    $option{ out } = $option{ cartridge } unless $option{ out };
 }
 
 # ____________________________________________________________________________
@@ -802,13 +802,13 @@ sub copyfile {
     my $name = shift ;
     my $to = shift ;
     unless ( defined $cart_catalog{ $name } && $cart_catalog{$name} > 0 ) {
-        warn "File  '$name'  does not exist in cartridge " . $option{ cardridge } ."\n" ;
+        warn "File  '$name'  does not exist in cartridge " . $option{ cartridge } ."\n" ;
         return ;
     }
     die "'copy' requires 'to' option" if $option{ copy } and !$option{ to } ;
     my $newname = substr( sprintf( '%-10s', $to ), 0, 10) ;
     if ( defined $cart_catalog{ $newname } && $cart_catalog{$newname} > 0 ) {
-        warn "File  '$newname'  already exists in cartridge " . $option{ cardridge } ."\n" ;
+        warn "File  '$newname'  already exists in cartridge " . $option{ cartridge } ."\n" ;
         return ;
     }
 
@@ -834,7 +834,7 @@ sub copyfile {
         $record->{ $key }->{ empty } = 0 ;
     }
 
-    $option{ out } = $option{ cardridge } unless $option{ out };
+    $option{ out } = $option{ cartridge } unless $option{ out };
 }
 
 # ____________________________________________________________________________
@@ -845,13 +845,13 @@ sub renamefile {
     my $name = shift ;
     my $to = shift ;
     unless( defined $cart_catalog{ $name } && $cart_catalog{$name} > 0 ) {
-        warn "File  '$name'  does not exist in cartridge " . $option{ cardridge } . "\n";
+        warn "File  '$name'  does not exist in cartridge " . $option{ cartridge } . "\n";
         return ;
     }
     die "'rename' requires 'to' option" if $option{ rename } and !$option{ to } ;
     my $newname = substr( sprintf( '%-10s', $to ), 0, 10) ;
     if ( defined $cart_catalog{ $newname } && $cart_catalog{$newname} > 0 ) {
-        warn "File  '$newname'  already exists in cartridge " . $option{ cardridge } . "\n";
+        warn "File  '$newname'  already exists in cartridge " . $option{ cartridge } . "\n";
         return ;
     }
 
@@ -866,7 +866,7 @@ sub renamefile {
         $record->{ $key }->{ sector } = $sector ;
         substr( $whole, $record->{ $key }->{ offset }, $SSIZE ) = $sector ;
     }
-    $option{ out } = $option{ cardridge } unless $option{ out };
+    $option{ out } = $option{ cartridge } unless $option{ out };
 }
 
 # ____________________________________________________________________________
@@ -876,7 +876,7 @@ sub renamefile {
 sub noautorun {
     my $name = shift ;
     unless ( defined $cart_catalog{ $name } && $cart_catalog{$name} > 0 ) {
-        warn "File  '$name'  does not exist in cartridge " . $option{ cardridge } . "\n";
+        warn "File  '$name'  does not exist in cartridge " . $option{ cartridge } . "\n";
         return ;
     }
     my @list = sort { $b <=> $a } @{ $cart_cat_sec{ $name } } ;
@@ -889,7 +889,7 @@ sub noautorun {
         my @detail = unpack("CSSSS", substr( $data,0,9 ) ) ;
         next if 0 != $detail[0] && $option{ noautorun } eq '*' ;
         unless ( 0 == $detail[0] ) {
-            warn "File  '$name'  is not a program in cartridge " . $option{ cardridge } . "\n";
+            warn "File  '$name'  is not a program in cartridge " . $option{ cartridge } . "\n";
             return;
         }
         if ( $detail[4]<32768 ) {
@@ -898,8 +898,8 @@ sub noautorun {
             substr( $record->{ $key }->{ sector }, 30+7, 2 ) = pack( 'S', 65535 ) ;
             substr( $record->{ $key }->{ sector }, 30+512, 1 ) = pack( 'C', $dchk ) ;
             substr( $whole, $record->{ $key }->{ offset }, $SSIZE ) = $record->{ $key }->{ sector } ;
-            $option{ out } = $option{ cardridge } unless $option{ out } ;
-            print "File  '$name'  Autorun removed in cartridge " . $option{ cardridge } . "\n";
+            $option{ out } = $option{ cartridge } unless $option{ out } ;
+            print "File  '$name'  Autorun removed in cartridge " . $option{ cartridge } . "\n";
             return ;
         }
     }
@@ -913,7 +913,7 @@ sub autorun {
     my $name = shift ;
     my $line = shift ;
     unless ( defined $cart_catalog{ $name } && $cart_catalog{$name} > 0 ) {
-        warn "File  '$name'  does not exist in cartridge " . $option{ cardridge } . "\n" ;
+        warn "File  '$name'  does not exist in cartridge " . $option{ cartridge } . "\n" ;
         return ;
     }
     die "Usage mdr.pl <cartridge.mdr> autorun=filename line=n" unless $line ;
@@ -926,7 +926,7 @@ sub autorun {
         my $data = substr( $sector, 30, 512 ) ;
         my @detail = unpack("CSSSS", substr( $data,0,9 ) ) ;
         unless ( 0 == $detail[0] ) {
-            warn "File  '$name'  is not a program " . $option{ cardridge } . "\n";
+            warn "File  '$name'  is not a program " . $option{ cartridge } . "\n";
             return ;
         }
         substr( $data, 7, 2 ) = pack( 'S', ( $line & 65535 ) ) ; # set 4th S
@@ -934,7 +934,7 @@ sub autorun {
         substr( $record->{ $key }->{ sector }, 30+7, 2 ) = pack( 'S', $line ) ;
         substr( $record->{ $key }->{ sector }, 30+512, 1 ) = pack( 'C', $dchk ) ;
         substr( $whole, $record->{ $key }->{ offset }, $SSIZE ) = $record->{ $key }->{ sector } ;
-        $option{ out } = $option{ cardridge } unless $option{ out } ;
+        $option{ out } = $option{ cartridge } unless $option{ out } ;
         print "Autorun set for $name to line $line\n" ;
         return ;
     }
@@ -965,7 +965,7 @@ sub getfile {
 
     my $name     = shift ;
     my $data = '' ;
-    warn "File  '$name'  does not exist in cartridge " . $option{ cardridge } . "\n" unless defined $cart_catalog{ $name } && $cart_catalog{$name} > 0 ;
+    warn "File  '$name'  does not exist in cartridge " . $option{ cartridge } . "\n" unless defined $cart_catalog{ $name } && $cart_catalog{$name} > 0 ;
     my @list = sort { # sort by recnum of each sector of file.
         $record->{ $a }->{ recnum }
         <=>
@@ -1086,7 +1086,7 @@ sub putfile {
         $content = substr( $content, $reclen ) ;
     }
     
-    $option{ out } = $option{ cardridge } unless $option{ out };
+    $option{ out } = $option{ cartridge } unless $option{ out };
 }
 
 # ____________________________________________________________________________
@@ -1114,13 +1114,13 @@ sub file_to_mdr {
             my $content ;
             sysread( F, $content, -s F ) ;
             if ( defined $cart_catalog{ $to } && $cart_catalog{$to} > 0 ) {
-                warn "File  '$to'  already exists in cartridge " . $option{ cardridge } . "\n" ;
+                warn "File  '$to'  already exists in cartridge " . $option{ cartridge } . "\n" ;
             } else {
                 putfile( $to, $content, 1 )
             }
         }
         else {
-            warn "File  '$name'  cannot read in cartridge " . $option{ cardridge } ."\n" ;
+            warn "File  '$name'  cannot read in cartridge " . $option{ cartridge } ."\n" ;
         }
     }
     close F ;
@@ -1147,7 +1147,7 @@ sub tape_to_mdr {
         if ( 0 == $flag ) {
             ( $len, $flag, $type, $name, $datalength, $param1, $param2, $hchk )  = unpack( 'S CC A10 SSS C', $content ) ;
             my $verify = checkbittoggle( substr($content, 2, 18), 18 ) ;
-            warn( "File  '$name'  header: wrong checksum in cartridge " . $option{ cardridge } ."\n" ) if $hchk != $verify ;
+            warn( "File  '$name'  header: wrong checksum in cartridge " . $option{ cartridge } ."\n" ) if $hchk != $verify ;
             $header = pack ( 'CSSSS' , $type, $datalength,   23813, $param2  , $param1 ) if $type == 0;
             $header = pack ( 'CSSSS' , $type, $datalength,      -1, $param1  , $param2 ) if $type == 1;
             $header = pack ( 'CSSSS' , $type, $datalength,      -1, $param1  , $param2 ) if $type == 2;
@@ -1163,12 +1163,12 @@ sub tape_to_mdr {
             ( $len, $flag, $data, $dchk )  = unpack( $pattern, $content ) ;
             $data = substr( $content, 3, $len-2 ) ;
             my $verify = checkbittoggle( substr( $content, 2, $len-1 ), $len-1 ) ;
-            warn( "File  '$name'  header: wrong checksum in cartridge " . $option{ cardridge } ."\n" ) if $dchk != $verify ;
+            warn( "File  '$name'  header: wrong checksum in cartridge " . $option{ cartridge } ."\n" ) if $dchk != $verify ;
             my @detail = unpack("CSSSS", substr( $header,0,9 ) ) ;
             my @follow = unpack("A${datalength}", $data ) ;
             print length($header) . ' ' . length($data) . "\n" ;
             if ( defined $cart_catalog{ $name } && $cart_catalog{$name} > 0 ) {
-                warn "File  '$name'  already exists in cartridge " . $option{ cardridge } ."\n"  ;
+                warn "File  '$name'  already exists in cartridge " . $option{ cartridge } ."\n"  ;
             }
             else {
                 putfile( $name, $header . $data  ) ;
@@ -1177,7 +1177,7 @@ sub tape_to_mdr {
         $content = substr( $content, 2+$len ) ;
     }
 
-    $option{ out } = $option{ cardridge } unless $option{ out };
+    $option{ out } = $option{ cartridge } unless $option{ out };
 }
 
 # ____________________________________________________________________________
@@ -1256,7 +1256,7 @@ if ( $option{ put } && ( $option{ tape } or $option{ dump } or $option{ text } )
         $content =~ s/\n/\r/mg ;
     }
     putfile( $option{ put }, $content, ( $option{ dump }||$option{ text } ? 1 : 0 ) ) ;
-    print "Host file $hostname copied to $option{ text } in cartridge $option{ cardridge } \n" ;
+    print "Host file $hostname copied to $option{ text } in cartridge $option{ cartridge } \n" ;
 }
 
 # put to mdr from tape or text file
@@ -1273,3 +1273,26 @@ burp       if $option{ out } ;
 exit 0 ;
 
 1;
+
+__END__
+-l d:\zx\Z80\20160827.MDR rename=run to=Run04
+-l d:\zx\Z80\20160827.MDR -p tape=\zx\forth\vforth13.tap
+-l d:\zx\Z80\20160829.MDR rename=sys64 to=SYS64
+-l d:\zx\Z80\20160829.MDR -p tape=d:\zx\forth\vforth13.tap
+-l d:\zx\Z80\20160829.MDR erase=run
+-l d:\zx\Z80\20160829.MDR -p tape=d:\zx\forth\vforth13.tap
+-l d:\zx\Z80\20160829.MDR put=[file1.txt,file2.txt]
+-l d:\zx\Z80\20160829.MDR put=[file1.txt,file2.txt] to=file1
+-l wl1.mdr rename="Sprite S()" to="Sprite s()"
+-l -b -s d:\zx\Forth\2016\FORTH1.MDR
+-l "d:/zx/Forth/2018/RUN.MDR" out=OUT.MDR label=FORTH 
+-l "d:/zx/Forth/2018/RUN.MDR" rename=Forth
+-l "d:/zx/Forth/2018/RUN.MDR" autorun=run line=65535
+-l /zx/forth/F1413/M2.MDR get=forth1413d dump=forth1413d.dump.txt
+/zx/forth/F1413/M7.MDR put=F1413.f dump=/zx/Forth/F1413/F1413.f
+/zx/forth/F1413/M5.MDR   put=F1413.f dump=/zx/forth/F1413/F1413.f
+/zx/forth/F1413/M5.MDR   put=.bat dump=/zx/forth/F1413/copy_source_to_mdr7.bat
+/zx/forth/F1413/M5.MDR   -v -lb
+
+/zx/forth/F1413/M5.MDR   put=F1413.f text=/zx/forth/F1413/F1413.f
+/zx/forth/F1413/M5.MDR   get=F1413.f dump=/zx/forth/F1413/dump.txt
