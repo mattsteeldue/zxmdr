@@ -4,9 +4,9 @@
 
   mdr.pl
 
-  rev.2019.08.20
+  rev.2020.03.01
 
-  \ by Matteo Vitturi, 2016-2019
+  \ by Matteo Vitturi, 2016-2020
 
   \ Copying, modifying and distributing this software is allowed 
   \ provided this copyright notice is kept.  
@@ -54,9 +54,10 @@
   
     get=name        gets a file from .MDR and write it to "host" file
     dump=name       same as get, but output is just a dump file
+    dump32=name     same as dump, but adds/takes a new-line every 32 characters.
+    dumpblock=name  same as dump32, but adds a "Screen#" header for each 16 rows.
     text=name       same as dump, but converts LF to CR, or CR+LF to CR.
     put=name        reads "host" files and creates files to .MDR
-    host=file.out   host file involved in get/put operation
 
   Examples:
 
@@ -227,6 +228,8 @@ my %option = (
     cartridge        => '',
     tape             => '',
     dump             => '',
+    dump32           => '',
+    dumpblock        => '',
     text             => '',
 
     out              => '',
@@ -281,6 +284,11 @@ for my $switch ( @ARGV ) {
         }
     }
 }
+
+# ____________________________________________________________________________
+
+$option{ dump32 } = $option{ dumpblock } if $option{ dumpblock } ;
+$option{ dump } = $option{ dump32 } if $option{ dump32 } ;
 
 # ____________________________________________________________________________
 
@@ -360,9 +368,10 @@ if ( $option{ help }) {
   
     get=name        gets a file from .MDR and write it to "host" file
     dump=name       same as get, but output is just a dump file
+    dump32=name     same as dump, but adds/takes a new-line every 32 characters.
+    dumpblock=name  same as dump32, but adds a "Screen#" header for each 16 rows.
     text=name       same as dump, but converts LF to CR, or CR+LF to CR.
     put=name        reads "host" files and creates files to .MDR
-    host=file.out   host file involved in get/put operation
 
   Examples:
 
@@ -424,23 +433,25 @@ my $max_hdnumb = 0 ;
 # ____________________________________________________________________________
 
 # find first free sector.
-my $current_head = 255 ;
+my $current_head = 0 ;
 sub first_free {
     my $pass = 0 ;
-    my $i = $max_hdnumb + 1 ;
-    $i -= 1 ;
-    while ( $i != $current_head ) {
-        $i = $max_hdnumb - 1 if 1 == $i ;
-        # $i = 253 if 0 == $i ;
+    my $i = $current_head ;
+    while ( 0 == $pass || $i != $current_head ) {
         my $key = sprintf( "%03d", $i ) ;
         if ($record->{ $key }->{ unusable } ) {
             $i -= 1 ;
         } else {
             if ( $record->{ $key }->{ empty }  ) {
-                $current_head = $i ;
+                $current_head = $i - 2; # motor latency
+                $current_head += $max_hdnumb if $current_head < 1 ;
                 return $key ;
             }
             $i -= 1 ;
+            if ( $i < 1 ) {
+                $pass++ ;
+                $i = $max_hdnumb ;
+            }
         }
     }
     die "Microdrive full" ;
@@ -1001,6 +1012,18 @@ sub getfile {
     }
     
     print length( $content ) ;
+
+    if ( $option{ dump32 } ) {
+        my @tmp = unpack( "(A32)*", $content );
+        if ( $option{ dumpblock } ) {
+            for( my ($k,$i) = (1,0); $i < $#tmp ; $k++, $i+=16 ) {
+                $tmp[$i] = "\n\n\\ Screen# $k\n$tmp[$i]" ;
+            }
+        }
+        local $" = "\n" ;
+        $content = "@tmp\n" ;
+    }
+
     return ($header, $content ) ;
 }
 
@@ -1252,9 +1275,42 @@ if ( $option{ put } && ( $option{ tape } or $option{ dump } or $option{ text } )
     open (H, "<","$hostname") || die "Cannot read $hostname" ;
     sysread( H, $content, -s $hostname ) ;
     close H ;
-    if ( $option{ text } ) {
-        $content =~ s/\n/\r/mg ;
+
+    if( $option{ dump32 } ) {
+        my @tmp = split( /\n/, $content ) ;
+
+        if ( $option{ dumpblock } ) {
+            my @buf = () ;
+            my $line = 16 ;
+            my $scrn = 1 ;
+            for my $row (@tmp) {
+                if ( $row =~ /^\\ Screen# (\d+)/ ) {
+                    my $nextscr = $1 ;
+                    while ( $line < 16 ) {
+                        push( @buf, ' ' x 32) ;
+                        $line++ ;
+                    }
+                    while ( $scrn < $nextscr ) {
+                        push( @buf, ' ' x 512);
+                        $scrn++;
+                    }
+                    $line = 0 ;
+                    $scrn++ ;
+                    next ;
+                }
+                next if $line >= 16 ;
+                push ( @buf,$row );
+                $line++ ;
+            }
+            @tmp = @buf ;
+        }
+
+        map{ $_ = sprintf( '%-32s', $_ ) } @tmp ;
+        local $" = '' ;
+        $content = "@tmp" ;
     }
+
+    if ( $option{ text } ) {  $content =~ s/\n/\r/mg }
     putfile( $option{ put }, $content, ( $option{ dump }||$option{ text } ? 1 : 0 ) ) ;
     print "Host file $hostname copied to $option{ text } in cartridge $option{ cartridge } \n" ;
 }
@@ -1270,6 +1326,39 @@ if ( $option{ put } && ( $option{ tape } or $option{ dump } or $option{ text } )
 # flush to mdr if necessary
 burp       if $option{ out } ;
 
-exit 0 ;
-
 1;
+
+__END__
+-l d:\zx\Z80\20160827.MDR rename=run to=Run04
+-l d:\zx\Z80\20160827.MDR -p tape=\zx\forth\vforth13.tap
+-l d:\zx\Z80\20160829.MDR rename=sys64 to=SYS64
+-l d:\zx\Z80\20160829.MDR -p tape=d:\zx\forth\vforth13.tap
+-l d:\zx\Z80\20160829.MDR erase=run
+-l d:\zx\Z80\20160829.MDR -p tape=d:\zx\forth\vforth13.tap
+-l d:\zx\Z80\20160829.MDR put=[file1.txt,file2.txt]
+-l d:\zx\Z80\20160829.MDR put=[file1.txt,file2.txt] to=file1
+-l wl1.mdr rename="Sprite S()" to="Sprite s()"
+-l -b -s d:\zx\Forth\2016\FORTH1.MDR
+-l "d:/zx/Forth/2018/RUN.MDR" out=OUT.MDR label=FORTH 
+-l "d:/zx/Forth/2018/RUN.MDR" rename=Forth
+-l "d:/zx/Forth/2018/RUN.MDR" autorun=run line=65535
+-l /zx/forth/F1413/M2.MDR get=forth1413d dump=forth1413d.dump.txt
+/zx/forth/F1413/M7.MDR put=F1413.f dump=/zx/Forth/F1413/F1413.f
+/zx/forth/F1413/M5.MDR   put=F1413.f dump=/zx/forth/F1413/F1413.f
+/zx/forth/F1413/M5.MDR   put=.bat dump=/zx/forth/F1413/copy_source_to_mdr7.bat
+/zx/forth/F1413/M5.MDR   -v -lb
+
+/zx/forth/F1413/M5.MDR   put=F1413.f text=/zx/forth/F1413/F1413.f
+/zx/forth/F1413/M5.MDR   get=F1413.f dump=/zx/forth/F1413/dump.txt
+/zx/forth/F1413/fuse-test2 rename=rem to=rem1
+/zx/forth/F1413/M2.MDR   get=!Blocks   dump=/zx/forth/F1413/!Blocks-mdr.txt
+/zx/forth/F1413/M2.MDR   put=!Blocks   dumpblock=/zx/forth/F1413/!Blocks-tmp.txt
+
+/zx/forth/F1413/M1.MDR   get=forth1413 dump=/zx/forth/F1413/forth1413.asm
+
+c:\zx\forth\f1413\M2 -l get=!Blocks dumpblock=/zx/forth/F1413/!Blocks-mdr2.txt
+c:\zx\forth\f1413\M3 -l get=!Blocks dumpblock=/zx/forth/F1413/!Blocks-mdr3.txt
+c:\zx\forth\f1413\M4 -l get=!Blocks dumpblock=/zx/forth/F1413/!Blocks-mdr4.txt
+c:\zx\forth\f1413\M5 -l get=!Blocks dumpblock=/zx/forth/F1413/!Blocks-mdr5.txt
+
+
