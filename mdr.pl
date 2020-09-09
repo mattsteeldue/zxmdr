@@ -4,7 +4,7 @@
 
   mdr.pl
 
-  rev.2020.03.01
+  rev.2020.09.09
 
   \ by Matteo Vitturi, 2016-2020
 
@@ -65,7 +65,7 @@
     -l xyz.mdr erase=run                         erase "run" file
     -l xyz.mdr rename=abc to=ABC                 rename "abc" to "ABC"
     -l xyz.mdr -p tape=afile.tap                 put afile.tap content  
-    -l xyz.mdr put=[f1,f2] to=file1              put files
+    -l xyz.mdr put=f1 host=file1.bin             copy host file1.bin to mdr "f1"
 
 
   From Z80 tecnical documentation
@@ -379,8 +379,8 @@ if ( $option{ help }) {
     -l xyz.mdr erase=run                         erase "run" file
     -l xyz.mdr rename=abc to=ABC                 rename "abc" to "ABC"
     -l xyz.mdr -p tape=afile.tap                 put afile.tap content  
-    -l xyz.mdr put=[f1,f2] to=file1              put files
-    
+    -l xyz.mdr put=f1 host=file1.bin             copy host file1.bin to mdr "f1"
+
     \n) ;
     
     exit ;
@@ -1269,8 +1269,8 @@ if ( $option{ get } && ( $option{ tape } or $option{ dump } or $option{ text } )
     close H ;
 }
 
-if ( $option{ put } && ( $option{ tape } or $option{ dump } or $option{ text } ) ) {
-    my $hostname = $option{ tape } || $option{ dump } || $option{ text };
+if ( $option{ put } && ( $option{ host } or $option{ text } ) ) {
+    my $hostname = $option{ tape } || $option{ host } || $option{ text };
     my $content = '';
     open (H, "<","$hostname") || die "Cannot read $hostname" ;
     sysread( H, $content, -s $hostname ) ;
@@ -1311,20 +1311,20 @@ if ( $option{ put } && ( $option{ tape } or $option{ dump } or $option{ text } )
     }
 
     if ( $option{ text } ) {  $content =~ s/\n/\r/mg }
-    putfile( $option{ put }, $content, ( $option{ dump }||$option{ text } ? 1 : 0 ) ) ;
+    putfile( $option{ put }, $content, ( $option{ host }||$option{ text } ? 1 : 0 ) ) ;
     print "Host file $hostname copied to $option{ text } in cartridge $option{ cartridge } \n" ;
 }
 
 # put to mdr from tape or text file
-# if ( $option{ put } && !$option{ get } ) {
-#     tape_to_mdr( $option{ tape } )                if      $option{ tape } && $option{ put } eq '*';
-#     file_to_mdr( $option{ put }, $option{ to } )  if ref( $option{ put } ) || $option{ put } ne '*';
-# }
-
+if ( $option{ put } && !$option{ get } && $option{ tape } ) {
+    tape_to_mdr( $option{ tape } )                if      $option{ tape } && $option{ put } eq '*';
+    # file_to_mdr( $option{ put }, $option{ to } )  if ref( $option{ put } ) || $option{ put } ne '*';
+}
 
 
 # flush to mdr if necessary
 burp       if $option{ out } ;
+print "File $option{ cartridge } was NOT modified\n" unless $option{ out } ;
 
 1;
 
@@ -1360,5 +1360,9 @@ c:\zx\forth\f1413\M2 -l get=!Blocks dumpblock=/zx/forth/F1413/!Blocks-mdr2.txt
 c:\zx\forth\f1413\M3 -l get=!Blocks dumpblock=/zx/forth/F1413/!Blocks-mdr3.txt
 c:\zx\forth\f1413\M4 -l get=!Blocks dumpblock=/zx/forth/F1413/!Blocks-mdr4.txt
 c:\zx\forth\f1413\M5 -l get=!Blocks dumpblock=/zx/forth/F1413/!Blocks-mdr5.txt
+
+/zx/forth/F1413/M2.MDR   get=!Blocks dump=/zx/forth/F1413/!Blocks.txt
+/zx/forth/F15/M2.MDR   put=!Blocks host=/zx/forth/F15/!Blocks.bin.1.dat
+
 
 
