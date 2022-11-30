@@ -4,9 +4,9 @@
 
   mdr.pl
 
-  rev.2020.09.09
+  rev.2022.12.01
 
-  \ by Matteo Vitturi, 2016-2020
+  \ by Matteo Vitturi, 2016-2022
 
   \ Copying, modifying and distributing this software is allowed 
   \ provided this copyright notice is kept.  
@@ -30,6 +30,7 @@
      -r    removes autorun LINE from programs in cartridge.
      -v    verbose, show much more details at start
      -x    fix bad sectors
+     -c    create empty if not exists
 
   <cartridge> is the filename of a .MDR file.
   Normally operation will be done "in-place" unless an out option is specified.
@@ -225,6 +226,7 @@ my %option = (
     verbose          => 0,
 
     fix              => 0,
+    create           => 0,
     cartridge        => '',
     tape             => '',
     dump             => '',
@@ -255,7 +257,8 @@ for my $switch ( @ARGV ) {
             $option{ put             } = '*'  if $ch =~ /p/ ;
             $option{ verbose         } = 1    if $ch =~ /v/ ;
             $option{ fix             } = 1    if $ch =~ /x/ ;
-            $option{ shorthelp       } = 1    unless $ch =~ /[-hlfbsrgpvx]/ ; # catch-all
+            $option{ create          } = 1    if $ch =~ /c/ ;
+            $option{ shorthelp       } = 1    unless $ch =~ /[-hlfbsrgpvxc]/ ; # catch-all
         }
     }
     # switch key=[list]
@@ -344,6 +347,7 @@ if ( $option{ help }) {
      -r    removes autorun LINE from programs in cartridge.
      -v    verbose, show much more details at start
      -x    fix bad sectors
+     -c    create empty if not exists
 
   <cartridge> is the filename of a .MDR file.
   Normally operation will be done "in-place" unless an out option is specified.
@@ -461,7 +465,7 @@ sub first_free {
 # ____________________________________________________________________________
 
 sub slurp {
-    open ( MDR, '<', $option{ cartridge } ) || die "Cannot open mdr $option{ cartridge } " ;
+    open ( MDR, '<', $option{ cartridge } ) || warn "Cannot open mdr $option{ cartridge } " ;
     $realsize = sysread( MDR, $whole,  254 * $SSIZE + 1 ) ;
     close MDR ;
 }
@@ -1237,6 +1241,26 @@ sub sector_dump {
 
 # ____________________________________________________________________________
 
+if ( $option{ create } ) {
+    unless ( -f $option{ cartridge } ) {
+        $realsize = 254 * $SSIZE + 1 ;
+        $whole = pack ( "H2" x $realsize, "00" x $realsize ) ;
+        $option{ out } = $option{ cartridge } ;
+
+        for ( my $i = 0 ; $i < 254 ; ++$i ) {
+            my $offset = $i * $SSIZE ;
+            my ( $hdflag, $hdnumb, $ntused, $hdname, $hdchk  ) = # unpack( 'CC S A10 C', $header ) ;
+               ( "01" , 254-$i , "00" , " "x10 , 0 ) ;
+            $hdname = ' ' x 10;
+            my $header = pack( 'H2 C S A10', $hdflag, $hdnumb, $ntused, $hdname  ) ;
+            $hdchk = checksum( $header, 14 ) ;
+            $header = pack( 'H2 C S A10 C', $hdflag, $hdnumb, $ntused, $hdname, $hdchk  ) ;
+            substr( $whole, $offset, 15 ) = $header ;
+        }
+        burp ;
+    }
+}
+
 # read mdr
 slurp ;
 
@@ -1364,5 +1388,12 @@ c:\zx\forth\f1413\M5 -l get=!Blocks dumpblock=/zx/forth/F1413/!Blocks-mdr5.txt
 /zx/forth/F1413/M2.MDR   get=!Blocks dump=/zx/forth/F1413/!Blocks.txt
 /zx/forth/F15/M2.MDR   put=!Blocks host=/zx/forth/F15/!Blocks.bin.1.dat
 
+/zx/forth/F15/M1.MDR -p  tape=/zx/forth/F15/20160819.TAP
+
+/zx/forth/F15/m8.MDR  put=F15m.f  host=/zx/forth/F15/src/F15m.f
+/zx/forth/F15/M2.mdr  get=!Blocks  text=/zx/forth/F15/src/dump.txt
+/zx/forth/F15/M2.mdr  get=!Blocks  text=/zx/forth/F15/dump.txt
+
+-c /zx/mdr/empty_new.mdr
 
 
