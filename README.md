@@ -16,6 +16,8 @@ With this script, you are able to :
 
 Examples.
 
+$> perl mdr.pl  -c new-empty.mdr
+
 $> perl mdr.pl  m8.mdr
 
     Header: "M4        "
