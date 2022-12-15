@@ -31,6 +31,7 @@
      -v    verbose, show much more details at start
      -x    fix bad sectors
      -c    create empty if not exists
+     -g    used with tape to get all .mdr content to .tap
 
   <cartridge> is the filename of a .MDR file.
   Normally operation will be done "in-place" unless an out option is specified.
@@ -65,9 +66,10 @@
     -l xyz.mdr noautorun=run                     remove autorun from "run"
     -l xyz.mdr erase=run                         erase "run" file
     -l xyz.mdr rename=abc to=ABC                 rename "abc" to "ABC"
-    -l xyz.mdr -p tape=afile.tap                 put afile.tap content  
+    -l xyz.mdr -p tape=afile.tap                 put afile.tap content to mdr
     -l xyz.mdr put=f1 host=file1.bin             copy host file1.bin to mdr "f1"
-
+    -l xyz.mdr -g tape=afile.tap                 get mdr content to afile.tap
+    -l xyz.mdr get=prnt dump=prnt.txt            get prnt file from mdr to dump
 
   From Z80 tecnical documentation
   
@@ -222,6 +224,7 @@ my %option = (
     autorun          => '',
     line             => 0,
     get              => '',
+    getall           => 0,
     put              => '',
     verbose          => 0,
 
@@ -253,7 +256,7 @@ for my $switch ( @ARGV ) {
             $option{ showbad         } = 0    if $ch =~ /b/ ;
             $option{ sectors         } = 1    if $ch =~ /s/ ;
             $option{ noautorun       } = '*'  if $ch =~ /r/ ;
-            $option{ get             } = '*'  if $ch =~ /g/ ;
+            $option{ getall          } = '*'  if $ch =~ /g/ ;
             $option{ put             } = '*'  if $ch =~ /p/ ;
             $option{ verbose         } = 1    if $ch =~ /v/ ;
             $option{ fix             } = 1    if $ch =~ /x/ ;
@@ -348,6 +351,7 @@ if ( $option{ help }) {
      -v    verbose, show much more details at start
      -x    fix bad sectors
      -c    create empty if not exists
+     -g    used with tape to get all .mdr content to .tap
 
   <cartridge> is the filename of a .MDR file.
   Normally operation will be done "in-place" unless an out option is specified.
@@ -382,8 +386,10 @@ if ( $option{ help }) {
     -l xyz.mdr noautorun=run                     remove autorun from "run"
     -l xyz.mdr erase=run                         erase "run" file
     -l xyz.mdr rename=abc to=ABC                 rename "abc" to "ABC"
-    -l xyz.mdr -p tape=afile.tap                 put afile.tap content  
+    -l xyz.mdr -p tape=afile.tap                 put afile.tap content to mdr
     -l xyz.mdr put=f1 host=file1.bin             copy host file1.bin to mdr "f1"
+    -l xyz.mdr -g tape=afile.tap                 get mdr content to afile.tap
+    -l xyz.mdr get=prnt dump=prnt.txt            get prnt file from mdr to dump
 
     \n) ;
     
@@ -1007,15 +1013,16 @@ sub getfile {
         $header = pack ( 'CC A10 SSS' , 0, $detail[0], $name, $detail[1], $detail[3], $detail[4] ) if $detail[0] == 1;
         $header = pack ( 'CC A10 SSS' , 0, $detail[0], $name, $detail[1], $detail[3], $detail[4] ) if $detail[0] == 2;
         $header = pack ( 'CC A10 SSS' , 0, $detail[0], $name, $detail[1], $detail[2], 32768      ) if $detail[0] == 3;
-        $header .= checkbittoggle( $header, length( $header ) ) ;
-        # $header = pack ( 'S', length($header) ) . $header ;
-        
-        $content = substr( $data, $detail[1] ) ;
-        $content .= checkbittoggle( $content, length( $content ) ) ;
-        # $content = pack ( 'S', length($content) ) . $content ;
+        $header .= pack ( 'C', checkbittoggle( $header, length( $header ) ) );
+        ## $header = pack ( 'S', length($header) ) . $header ;
+
+        $content = pack ( 'C', 255 ) ;
+        $content .= substr( $data, 9, $detail[1] ) ;
+        $content .= pack ( 'C', checkbittoggle( $content, length( $content ) ) ) ;
+        ## $content = pack ( 'S', length($content) ) . $content ;
     }
     
-    print length( $content ) ;
+    # print length( $content ) ;
 
     if ( $option{ dump32 } ) {
         my @tmp = unpack( "(A32)*", $content );
@@ -1061,10 +1068,17 @@ sub mdr_to_tape {
         next unless $name ;
         my $size = $cart_catalog{$name} ;
         next unless $size ;
-        
+
         my ($header, $content) = getfile( $name ) ;
-        print H pack ( 'S', length($header) ) . $header ;
-        print H pack ( 'S', length($content) ) . $content ;
+        
+        next unless length( $header ) ;
+
+        ## print H pack ( 'S', length($header) ) . $header ;
+        ## print H pack ( 'S', length($content) ) . $content ;
+        $header  = pack ( 'S', length($header)  ) . $header ;
+        $content = pack ( 'S', length($content) ) . $content ;
+        syswrite( H, $header, length($header) ) ;
+        syswrite( H, $content, length($content) ) ;
     }
     $option{ noautorun } = '' ;
 
@@ -1272,6 +1286,7 @@ showcat    if $option{ showcat } ;
 erasefile   ( $option{ erase }  )                if $option{ erase } ;
 renamefile  ( $option{ rename }, $option{ to } ) if $option{ rename } ;
 copyfile    ( $option{ copy }  , $option{ to } ) if $option{ copy } ;
+mdr_to_tape ( $option{ tape }                  ) if $option{ getall } ;
 
 # remove all autorun
 multi_noautorun if $option{ noautorun } eq '*' ;
@@ -1288,6 +1303,11 @@ if ( $option{ get } && ( $option{ tape } or $option{ dump } or $option{ text } )
     my ($header,$content) = getfile( $option{ get } ) ;
     my $hostname = $option{ tape } || $option{ dump } || $option{ text };
     open (H, ">","$hostname") || die "Cannot write $hostname" ;
+    print "header: ", length( $header ), " content: ", length( $content ), "\n" ;
+    if ( length( $header ) ) {
+        $header  = pack ( 'S', length($header)  ) . $header ;
+        $content = pack ( 'S', length($content) ) . $content ;
+    }
     syswrite( H, $header, length($header) ) if length( $header ) ;
     syswrite( H, $content, length($content) ) if length( $content ) ;
     close H ;
@@ -1395,5 +1415,8 @@ c:\zx\forth\f1413\M5 -l get=!Blocks dumpblock=/zx/forth/F1413/!Blocks-mdr5.txt
 /zx/forth/F15/M2.mdr  get=!Blocks  text=/zx/forth/F15/dump.txt
 
 -c /zx/mdr/empty_new.mdr
+MFUS.mdr -g tape=MFUS.tap
+MFUS.mdr get=largefile  dump=largefile.bin
+
 
 
